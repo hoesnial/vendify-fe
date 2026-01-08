@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Health Assistant API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      .message {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+      }
+      .user {
+        background: #007bff;
+        color: white;
+        text-align: right;
+      }
+      .assistant {
+        background: #f0f0f0;
+        color: black;
+      }
+      .error {
+        background: #ff0000;
+        color: white;
+      }
+      input {
+        width: 80%;
+        padding: 10px;
+        font-size: 16px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #loading {
+        display: none;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test Health Assistant API</h1>
+
+    <div>
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Ketik pertanyaan Anda..."
+        value="saya sakit perut dibagian atas, mules dan mual"
+      />
+      <button onclick="sendMessage()">Kirim</button>
+      <div id="loading">Loading...</div>
+    </div>
+
+    <div id="messages"></div>
+
+    <script>
+      const API_URL = "http://localhost:3001/api/health-assistant/chat";
+      const messagesDiv = document.getElementById("messages");
+      const loadingDiv = document.getElementById("loading");
+      const messageInput = document.getElementById("messageInput");
+
+      async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        // Show user message
+        addMessage(message, "user");
+        messageInput.value = "";
+
+        // Show loading
+        loadingDiv.style.display = "block";
+
+        try {
+          console.log("Sending request to:", API_URL);
+          console.log("Message:", message);
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message }),
+          });
+
+          console.log("Response status:", response.status);
+          const data = await response.json();
+          console.log("Response data:", data);
+
+          if (data.success) {
+            addMessage(data.message, "assistant");
+          } else {
+            addMessage("Error: " + (data.message || "Unknown error"), "error");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          addMessage("Error: " + error.message, "error");
+        } finally {
+          loadingDiv.style.display = "none";
+        }
+      }
+
+      function addMessage(text, type) {
+        const div = document.createElement("div");
+        div.className = "message " + type;
+        div.textContent = text;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      // Allow Enter key to send
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendMessage();
+        }
+      });
+    </script>
+  </body>
+</html>
